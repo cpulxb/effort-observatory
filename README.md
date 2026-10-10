@@ -1,6 +1,6 @@
 # 档位观测台
 
-一个仅在本机运行的 Codex App / Codex CLI 请求核验网页。
+一个仅在本机运行的 Codex App / Codex CLI 请求核验网页，核验 Request 与 Response 的思考等级是否一致。
 
 ## 启动
 

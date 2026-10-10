@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f6f8f9" />
+    <title>档位观测台 · 请求与响应</title>
+    <link rel="stylesheet" href="/dashboard.css" />
+    <script src="/dashboard.js" type="module"></script>
+  </head>
+  <body>
+    <main class="dashboard">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 8h11m0 0-3-3m3 3-3 3M20 16H9m0 0 3-3m-3 3 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </span>
+          <div><h1>档位观测台</h1><p>请求与响应 <span>/</span> <span class="english-label">REQUEST LOG</span></p></div>
+        </div>
+        <div class="top-actions">
+          <select id="timezone" aria-label="显示时区">
+            <option value="Asia/Shanghai">北京时间 UTC+8</option>
+            <option value="UTC">协调世界时 UTC</option>
+          </select>
+          <button id="pause-refresh" class="button secondary" aria-pressed="false">暂停自动刷新</button>
+          <button id="refresh" class="icon-button" aria-label="刷新数据" title="刷新数据"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="M16 8a6.2 6.2 0 0 0-10.5-2L3.7 8M4 12a6.2 6.2 0 0 0 10.5 2l1.8-2M3.5 4.5V8h3.6m9.4 7.5V12h-3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+          <button id="help" class="button secondary">接入说明</button>
+          <span id="monitor-state" class="button secondary" role="status">正在读取监听状态</span>
+        </div>
+      </header>
+
+      <nav id="client-tabs" class="client-tabs" aria-label="选择客户端">
+        <button class="client-tab" data-client="Codex App" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.4" /><path d="M7 17h6m-3-3v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg><span>Codex App</span><span class="tab-count" data-client-count="Codex App">—</span></button>
+        <button class="client-tab" data-client="Codex CLI" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3" width="15" height="14" rx="2" stroke="currentColor" stroke-width="1.4" /><path d="m6 7 3 3-3 3m5 0h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" /></svg><span>Codex CLI</span><span class="tab-count" data-client-count="Codex CLI">—</span></button>
+        <button id="unknown-tab" class="client-tab" data-client="unknown" aria-pressed="false" hidden><span>客户端待确认</span><span class="tab-count" data-client-count="unknown">—</span></button>
+        <a class="timeline-link" href="/sessions">会话时间线 <span aria-hidden="true">↗</span></a>
+      </nav>
+
+      <div id="capture-status" class="capture-status" role="status">正在检查事件监听与客户端接入状态…</div>
+
+      <section class="stats" aria-label="当前客户端记录概览">
+        <div class="stat-card"><div class="stat-label">观测记录<span class="stat-icon" aria-hidden="true">≡</span></div><strong id="stat-total">—</strong><p>按可靠调用标识聚合</p></div>
+        <div class="stat-card stat-match"><div class="stat-label">回显一致<span class="stat-icon" aria-hidden="true">✓</span></div><strong id="stat-match">—</strong><p>Request 与 Response 档位一致</p></div>
+        <div class="stat-card stat-difference"><div class="stat-label">回显差异<span class="stat-icon" aria-hidden="true">≠</span></div><strong id="stat-difference">—</strong><p>查看两侧字段与原始证据</p></div>
+        <div class="stat-card stat-pending"><div class="stat-label">待确认<span class="stat-icon" aria-hidden="true">···</span></div><strong id="stat-pending">—</strong><p>等待响应、等待配对或字段待补全</p></div>
+      </section>
+      <p class="count-note">按逻辑调用统计；内部 HTTP 重试可能共用同一调用标识。请求与响应按调用标识配对，历史内存证据保留来源标记。</p>
+
+      <div id="error" class="error-banner" role="alert" hidden></div>
+      <div id="coverage-warning" class="coverage-warning" role="status" hidden></div>
+
+      <section class="log-panel" aria-label="请求与响应记录">
+        <div class="filters">
+          <div class="section-title"><h2>调用记录</h2><span class="live-label"><i aria-hidden="true"></i>本机观测</span></div>
+          <div class="filter-controls">
+            <label class="search"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.4" /><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg><input id="search" type="search" placeholder="搜索模型、档位、会话或 ID" aria-label="搜索记录" autocomplete="off" /></label>
+            <select id="result-filter" aria-label="核验状态筛选"><option value="">全部状态</option><option value="match">回显一致</option><option value="difference">回显差异</option><option value="pending">待确认</option></select>
+            <select id="purpose-filter" aria-label="调用用途筛选"><option value="">全部用途</option><option value="conversation">主对话</option><option value="title_generation">标题生成</option><option value="memory_consolidation">后台记忆合并</option><option value="unknown">用途未确认</option></select>
+            <select id="session-filter" aria-label="会话筛选"><option value="">全部会话</option></select>
+          </div>
+        </div>
+        <div class="table-scroll" role="region" aria-label="调用记录表，可横向滚动" tabindex="0">
+          <table>
+            <colgroup><col class="col-time" /><col class="col-request" /><col class="col-response" /><col class="col-result" /><col class="col-usage" /><col class="col-session" /><col class="col-detail" /></colgroup>
+            <thead><tr><th scope="col">时间</th><th scope="col"><span class="direction-dot request-dot" aria-hidden="true"></span>Request <span class="column-hint">模型 / 档位</span></th><th scope="col"><span class="direction-dot response-dot" aria-hidden="true"></span>Response <span class="column-hint">模型 / 档位</span></th><th scope="col">状态</th><th scope="col">用量 <span class="column-hint">输入 / 输出</span></th><th scope="col">会话</th><th scope="col" class="detail-column">详情</th></tr></thead>
+            <tbody id="call-rows"><tr><td class="table-empty" colspan="7"><span class="loading-dot" aria-hidden="true"></span>正在读取记录…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-bottom"><span id="result-count">正在加载…</span><div class="pagination"><button id="prev-page" class="pagination-button" aria-label="上一页" disabled>上一页</button><span id="page-label" aria-live="polite">第 1 页</span><button id="next-page" class="pagination-button" aria-label="下一页" disabled>下一页</button></div></div>
+      </section>
+
+      <footer><div><span class="footer-dot" aria-hidden="true"></span><span id="source-status">数据保存在本机</span><span class="footer-divider">·</span><span>回显字段不等于模型内部计算量。</span></div><span id="updated"></span></footer>
+    </main>
+
+    <dialog id="call-dialog" class="call-dialog" aria-labelledby="call-title">
+      <div class="dialog-head"><div><p class="eyebrow">REQUEST / RESPONSE</p><h2 id="call-title">调用详情</h2></div><button id="close-call" class="icon-button close-button" aria-label="关闭调用详情"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="m5.5 5.5 9 9m0-9-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg></button></div>
+      <div id="call-detail" class="dialog-body"></div>
+    </dialog>
+
+    <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">
+      <div class="dialog-head"><div><p class="eyebrow">LISTEN &amp; COMPARE</p><h2 id="help-title">常驻监听与客户端接入</h2></div><button id="close-help" class="icon-button close-button" aria-label="关闭接入说明"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="m5.5 5.5 9 9m0-9-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg></button></div>
+      <div class="dialog-body help-body">
+        <section><h3><span>01</span> 启用客户端事件，再重启客户端</h3><p>Codex App 与 Codex CLI 需要启用观测启动参数，并重新启动，才能写出调用事件和原始响应事件。服务运行仅表示监听器已启动；顶部会分别显示两个客户端是否已接入。「待重启接入」表示当前没有已接入的客户端进程。</p><p>请求仍使用原有服务地址，无需更改客户端 <code>base_url</code>。客户端接入后，监听器常驻读取事件，无需手动开始或设置捕获时长。</p></section>
+        <section><h3><span>02</span> Request 与 Response 自动配对</h3><p>Request 来自客户端发送事件，Response 来自调用完成事件及原始响应事件。客户端生成的逻辑调用 UUID 标识同一次调用，服务端 <code>response_id</code> 关联响应生命周期；不按相近时间或相同会话猜测配对。</p><p>请求发出后显示「等待响应」；只有单侧证据时显示等待状态。一个聊天轮次可以触发多次调用，内部 HTTP 重试可能共用一个逻辑调用标识，因此记录数不等于网络请求包数或计费次数。</p></section>
+        <section><h3><span>03</span> 核对字段和来源</h3><p>Codex App 与 Codex CLI 分开显示。Request 展示请求的模型与 <code>reasoning.effort</code>，Response 展示采集到的服务端回显。完成事件本身没有携带回显时标记「回显未采集」；原始响应明确未含档位时标记「未回显」，两者分别保留。</p><p>历史内存证据仍可查看，并标记「历史内存」。缺少调用标识的旧记录不会强行配对。</p></section>
+        <section><h3><span>04</span> 当前采集范围</h3><p>观测依赖当前版本客户端提供的原生调用事件和响应事件。HTTP 与 WebSocket 的事件支持随客户端版本和实际连接路径而异；仅凭监听器运行不能保证所有网络包都已采集。出现读取错误时，顶部会显示错误信息。</p></section>
+        <p class="note">响应字段表示服务端报告值，可以核对字段差异，不能直接测量模型内部的实际思考量。</p>
+      </div>
+    </dialog>
+  </body>
+</html>

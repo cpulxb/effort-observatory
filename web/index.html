@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>档位观测台 · Effort Observatory</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" type="module"></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="档位观测台首页"
+        ><span class="brand-mark">≋</span
+        ><span>档位观测台<small>EFFORT OBSERVATORY</small></span></a
+      >
+      <button
+        id="toggle-sessions"
+        class="mobile-toggle"
+        aria-controls="session-browser"
+        aria-expanded="false"
+      >
+        选择 / 搜索会话
+      </button>
+      <div id="session-browser">
+        <div class="side-label">工作区 <span>LOCAL / 01</span></div>
+        <div class="search">
+          <span aria-hidden="true">⌕</span
+          ><input
+            id="search"
+            type="search"
+            placeholder="搜索标题、模型或会话 ID"
+            aria-label="搜索会话"
+          />
+        </div>
+        <div class="filters">
+          <select id="client-filter" aria-label="客户端筛选">
+            <option value="">全部客户端</option>
+            <option>Codex App</option>
+            <option>Codex CLI</option></select
+          ><select id="result-filter" aria-label="证据筛选">
+            <option value="">全部记录</option>
+            <option value="difference">历史曾有差异</option>
+            <option value="captured">已有证据</option>
+          </select>
+        </div>
+        <div class="sessions-heading">
+          <span>会话记录</span><span id="session-count">—</span>
+        </div>
+        <nav id="sessions" aria-label="会话列表">
+          <p class="muted">正在读取本地记录…</p>
+        </nav>
+      </div>
+      <div class="side-bottom">
+        <span class="status-light"></span>本地运行 · 数据保存在本机<small
+          id="source-status"
+          >常驻事件监听 / 历史会话记录</small
+        >
+      </div>
+    </aside>
+    <main>
+      <header class="topbar">
+        <div class="breadcrumb">观测工作台 <span>/</span> 请求与响应核验</div>
+        <div class="top-actions">
+          <select id="timezone" aria-label="显示时区">
+            <option value="Asia/Shanghai">北京时间 UTC+8</option>
+            <option value="UTC">协调世界时 UTC</option></select
+          ><button
+            class="icon-button"
+            id="refresh"
+            title="刷新数据"
+            aria-label="刷新数据"
+          >
+            ↻</button
+          ><button
+            class="button secondary"
+            id="pause-refresh"
+            aria-pressed="false"
+          >
+            暂停自动刷新
+          </button>
+          <button class="button secondary" id="help">接入说明</button>
+        </div>
+      </header>
+      <button
+        id="toggle-overview"
+        class="mobile-toggle"
+        aria-controls="overview"
+        aria-expanded="false"
+      >
+        工作区概览与监听状态
+      </button>
+      <div id="overview">
+        <section class="intro">
+          <div>
+            <div class="eyebrow">OBSERVE THE EVIDENCE</div>
+            <h1>让每个档位，有据可查<span>.</span></h1>
+            <p>查看会话消息与历史证据；逐调用 Request / Response 请返回首页。</p>
+          </div>
+          <span id="monitor-state" class="button secondary" role="status">正在读取监听状态</span>
+        </section>
+        <div id="capture-status" class="capture-status" aria-live="polite">
+          正在检查事件监听与客户端接入状态…
+        </div>
+        <section class="stats" aria-label="工作区概览">
+          <div>
+            <span>已发现会话</span><strong id="stat-sessions">—</strong
+            ><small>本机客户端记录</small>
+          </div>
+          <div>
+            <span>已保留证据</span><strong id="stat-evidence">—</strong
+            ><small>请求、响应与片段</small>
+          </div>
+          <div>
+            <span>存在档位差异</span><strong id="stat-diff">—</strong
+            ><small>会话内任意轮次曾有差异</small>
+          </div>
+          <div>
+            <span>已接入进程</span><strong id="stat-processes">—</strong
+            ><small id="process-note">启用观测参数的客户端</small>
+          </div>
+        </section>
+      </div>
+      <div id="error" class="error-banner" role="alert" hidden></div>
+      <section id="detail" class="workspace">
+        <div class="empty">
+          <div class="empty-mark">↖</div>
+          <h2>选择一条会话</h2>
+          <p>查看消息、时间、工具调用与对应的档位证据。</p>
+        </div>
+      </section>
+      <footer>
+        证据优先。未捕获 ≠
+        未启用。响应字段表示服务端报告值，不直接证明模型内部计算量。<span
+          id="updated"
+        ></span>
+      </footer>
+    </main>
+    <dialog id="help-dialog">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">CLIENT EVENTS</div>
+          <h2>常驻监听与历史会话</h2>
+        </div>
+        <button id="close-help" class="icon-button" aria-label="关闭说明">
+          ×
+        </button>
+      </div>
+      <div class="help-body">
+        <h3>01 / 启用观测参数并重启客户端</h3>
+        <p>
+          Codex App 与 Codex CLI 需通过观测启动方式重新启动，才能写出调用与原始响应事件。
+          顶部分别显示监听器和客户端接入状态；服务启动不表示当前客户端已接入。
+          「待重启接入」表示没有仍在运行的已接入进程。
+        </p>
+        <p>
+          客户端仍使用原有服务地址，无需修改 base_url。接入后的事件会持续记录，
+          不需要开始按钮，也没有捕获倒计时。暂停页面自动刷新不会停止监听。
+        </p>
+        <h3>02 / 按调用自动配对</h3>
+        <p>
+          Request 来自客户端发送事件，Response 来自完成事件与原始响应事件。
+          两侧按客户端生成的逻辑调用 UUID 连接，响应生命周期按 response_id 合并。
+          内部 HTTP 重试可能共用同一个逻辑调用 ID，记录数不等于所有网络请求包或计费次数。
+        </p>
+        <p>
+          <a href="/">返回调用日志首页</a>，按 Codex App / Codex CLI 查看并列的 Request / Response。
+          请求发出后显示等待响应；完成事件缺少服务端回显时显示「回显未采集」，
+          原始响应明确没有档位字段时显示「未回显」。
+        </p>
+        <h3>03 / 历史会话与证据关联</h3>
+        <p>
+          本页保留历史会话、消息与工具时间线，使用明确的 turn_id 或响应 output_id 关联消息。
+          历史内存证据可能只有会话 ID，缺少可靠消息标识，因此保留原始来源与关联说明，
+          不按时间强行归属。新的调用配对独立于消息时间线，直接在首页查看。
+          所有时间可切换 UTC；观测时间与服务端时间分别展示。
+        </p>
+        <p class="help-note">
+          事件支持取决于客户端版本和连接路径；HTTP 与 WebSocket 需分别验证。
+          监听器运行不保证所有网络包都已采集。响应字段表示服务端报告值，不能直接测量模型内部计算量。
+        </p>
+      </div>
+    </dialog>
+    <dialog id="export-dialog" aria-labelledby="export-dialog-heading">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">EXPORT SCOPE</div>
+          <h2 id="export-dialog-heading">选择导出范围</h2>
+        </div>
+        <button id="close-export" class="icon-button" aria-label="关闭导出">
+          ×
+        </button>
+      </div>
+      <div class="help-body">
+        <p id="export-title"></p>
+        <label for="export-scope">内容范围</label>
+        <select id="export-scope">
+          <option value="evidence">仅核验证据（默认）</option>
+          <option value="conversation">会话与工具记录</option>
+        </select>
+        <p id="export-preview" class="help-note"></p>
+        <p>
+          导出覆盖本会话全部已解析记录，不受当前页面分页限制。会话与工具记录保留解析器的文本长度限制，不是原始日志的逐字备份。
+        </p>
+        <p>
+          已对已知敏感字段与常见凭据格式做规则脱敏；自由文本仍可能包含个人信息，分享前请检查内容。
+        </p>
+        <button id="confirm-export" class="button primary">下载 JSON</button>
+      </div>
+    </dialog>
+    <dialog
+      id="evidence-reader"
+      class="evidence-reader"
+      aria-labelledby="evidence-reader-title"
+    >
+      <div class="dialog-head">
+        <h2 id="evidence-reader-title">原始证据</h2>
+        <button
+          id="close-evidence-reader"
+          class="icon-button"
+          aria-label="关闭证据阅读"
+        >
+          ×
+        </button>
+      </div>
+      <pre id="evidence-reader-content"></pre>
+    </dialog>
+    <div id="toast" role="status" hidden></div>
+  </body>
+</html>

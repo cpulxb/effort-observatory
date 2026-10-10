@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/python3 /root/Project/effort-observatory/observed_launcher.py --client cli -- "$@"

@@ -1,0 +1,13 @@
+[Unit]
+Description=Codex request and response observatory
+
+[Service]
+Type=simple
+WorkingDirectory=/root/Project/effort-observatory
+ExecStart=/usr/bin/python3 /root/Project/effort-observatory/server.py --port 8766
+Restart=on-failure
+RestartSec=3
+UMask=0077
+
+[Install]
+WantedBy=default.target
